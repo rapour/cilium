@@ -277,6 +277,11 @@ func setupVxlanDevice(logger *slog.Logger, sysctl sysctl.Sysctl, port, srcPortLo
 		PortHigh:  int(srcPortHigh),
 	}
 
+	// It's possible to create multiple vxlan devices with the same dstport,
+	// though only one of them can be 'up'. Delete an existing vxlan device
+	// with a mismatching port before attempting to create a new one to
+	// to avoid ensureDevice setting up the old interface. This avoids the
+	// agent getting stuck if it conflicts with an unmanaged vxlan interface.
 	if l, err := safenetlink.LinkByName(dev.Attrs().Name); err == nil {
 		// Recreate the device with the correct destination port. Modifying the device
 		// without recreating it is not supported.
